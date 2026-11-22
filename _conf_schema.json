@@ -1,0 +1,56 @@
+{
+  "model_dir": {
+    "type": "string",
+    "description": "SenseVoice 模型目录（必填，模型不随插件分发）",
+    "hint": "填包含 model.int8.onnx 与 tokens.txt 的绝对路径。留空则依次查找 插件数据目录 data/plugin_data/astrbot_plugin_sensevoice_asr/models/sensevoice 与环境变量 ASTRBOT_SENSEVOICE_DIR",
+    "default": "H:\\Deepseek-Harness\\Workspace\\asr\\models\\sensevoice"
+  },
+  "with_emotion": {
+    "type": "bool",
+    "description": "在转写结果前标注情绪",
+    "hint": "开启后输出形如「（开心）今天好热」，情绪由 SenseVoice 自带情绪头给出",
+    "default": true
+  },
+  "num_threads": {
+    "type": "int",
+    "description": "推理线程数",
+    "hint": "CPU 线程数，建议 4~8，和视频理解同时跑时别开太高",
+    "default": 6
+  },
+  "max_seconds": {
+    "type": "int",
+    "description": "单条语音最长处理秒数",
+    "hint": "超过则拒绝转写，防止超长音频占满 CPU",
+    "default": 180
+  },
+  "ffmpeg_path": {
+    "type": "string",
+    "description": "ffmpeg 可执行文件路径",
+    "hint": "留空则使用 PATH 中的 ffmpeg",
+    "default": ""
+  },
+  "keep_loaded": {
+    "type": "bool",
+    "description": "模型常驻内存",
+    "hint": "关闭后每次转写重新加载（约 1.4 秒），内存占用更低",
+    "default": true
+  },
+  "quality_threshold": {
+    "type": "float",
+    "description": "方言/失真判定阈值",
+    "hint": "0~1，转写可信度低于此值就返回 dialect_reply。越低越宽松，默认 0.5",
+    "default": 0.5
+  },
+  "dialect_reply": {
+    "type": "string",
+    "description": "SenseVoice 判低质量且兜底也失败时，返回给模型的内容",
+    "hint": "这段文字会作为语音转写结果进入对话",
+    "default": "[对方说了一段方言或口音很重的话，你没听懂，可以卖萌表示听不懂]"
+  },
+  "dialect_echo": {
+    "type": "string",
+    "description": "方言时回给群友的话",
+    "hint": "语音被判定为方言/失真时，直接发这句给群友",
+    "default": "这段像是方言，我没太听懂~"
+  }
+}

@@ -1,0 +1,6 @@
+name: astrbot_plugin_sensevoice_asr
+display_name: SenseVoice 本地语音识别
+desc: 用本地 SenseVoice 模型把 QQ 语音转成文字，支持情绪标注，零 API Key、零联网。
+version: "0.8.0"
+author: 未知の未来
+repo: https://github.com/Unknown-Future1/astrbot-plugin-asr

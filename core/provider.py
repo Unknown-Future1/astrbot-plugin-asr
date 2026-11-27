@@ -19,7 +19,6 @@ from astrbot.core.provider.provider import STTProvider
 from astrbot.core.provider.register import register_provider_adapter
 
 from . import paths
-from .audio import prepare_audio
 from .pipeline import Pipeline
 
 PROVIDER_TYPE = "asr_enhance_stt"
@@ -30,12 +29,12 @@ TEMPLATE = {
     "type": PROVIDER_TYPE,
     "provider_type": "speech_to_text",
     "enable": True,
-    "model_root": r"H:\Sensevoice",
+    "model_root": r"H:\ASR_Enhance_Scripts",
     "with_emotion": True,
     "enable_vad": True,
     "enable_yamnet": True,
     "enable_separate": True,
-    "max_seconds": 300,
+    "max_seconds": 180,
     "num_threads": 0,
     "quality_threshold": 0.5,
     "annotate_events": True,
@@ -47,7 +46,7 @@ TEMPLATE = {
 
 @register_provider_adapter(
     PROVIDER_TYPE,
-    "语音增强 ASR+（VAD/分离 + SenseVoice）",
+    "Sensevoice ASR语音转写增强（VAD/分离 + SenseVoice）",
     provider_type=ProviderType.SPEECH_TO_TEXT,
     default_config_tmpl=dict(TEMPLATE),
 )
@@ -57,7 +56,7 @@ class ProviderAsrEnhance(STTProvider):
         cfg = {**TEMPLATE, **(provider_config or {})}
         self.model_root = str(cfg.get("model_root") or "")
         self.with_emotion = bool(cfg.get("with_emotion", False))
-        self.max_seconds = int(cfg.get("max_seconds", 300) or 300)
+        self.max_seconds = int(cfg.get("max_seconds", 180) or 180)
         self.num_threads = int(cfg.get("num_threads", 0) or 0)
         self.quality_threshold = float(cfg.get("quality_threshold", 0.5) if cfg.get("quality_threshold") is not None else 0.5)
         self.annotate_events = bool(cfg.get("annotate_events", True))

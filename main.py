@@ -133,7 +133,7 @@ class AsrEnhancePlugin(Star):
             enable_yamnet=bool(cfg.get("enable_yamnet", True)),
             enable_separate=bool(cfg.get("enable_separate", True)),
             enable_sensevoice=bool(cfg.get("enable_sensevoice", True)),
-            num_threads=int(cfg.get("num_threads", 4) or 4),
+            num_threads=int(cfg.get("num_threads", 0) or 0),
             ffmpeg=find_ffmpeg(str(bundle.get("ffmpeg") or "")),
         )
 
@@ -200,7 +200,7 @@ class AsrEnhancePlugin(Star):
         p = self.pipeline
         bundle = getattr(self, "bundle", {})
         lines = [
-            "语音增强 ASR+",
+            "Sensevoice ASR语音转写增强",
             f"  模型包：{bundle.get('root')}"
             + (f"（缺 {len(bundle.get('missing') or [])} 个文件）" if bundle.get("missing") else "（完整）"),
             f"  触发方式：{cfg.get('trigger_mode')}",

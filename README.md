@@ -1,6 +1,3 @@
-<p align="center">
-  <img src="logo.png" width="160" alt="logo" />
-</p>
 
 # 🐋 Sensevoice ASR语音转写增强 — AstrBot 插件
 
@@ -50,9 +47,13 @@ QQ 语音 → 插件 → 文字（含笑声/掌声等标注） → 大模型 →
 ## 📋 前置要求
 
 1. **AstrBot** ≥ v4.29.4 已安装并正常运行
-2. **模型组件包** 已下载并解压到任意目录（默认约定 `H:\ASR_Enhance_Scripts`）
-   - 下载：[`ASR_Enhance_Scripts` Releases](https://github.com/Unknown-Future1/ASR_Enhance_Scripts/releases)
+
+2. **模型组件包** 让DSH或豆包等大模型代劳。下载并解压到任意目录（如`H:\ASR_Enhance_Scripts`中）
+
+   ![image-20261127182311161](C:\Users\Unknown_Future\AppData\Roaming\Typora\typora-user-images\image-20261127182311161.png)
+
    - 仓库：<https://github.com/Unknown-Future1/ASR_Enhance_Scripts>
+
 3. 无需显卡、无需 torch、无需安装 ffmpeg 到系统 PATH（模型包里自带）
 
 ### 模型包结构

@@ -4,11 +4,11 @@
     models/silero_vad.onnx       0.6 MB  人声检测
         models/yamnet_class_map.csv  0.01 MB 类别表
 
-外置（配置路径，缺了就跳过对应能力）：
+外置（模型包内，缺了就跳过对应能力）：
     sensevoice_dir   SenseVoice 模型目录（model.int8.onnx + tokens.txt）
     yamnet_model     YAMNet 15.4 MB（声音事件）
     uvr_model        UVR-MDX 人声分离 63.7 MB
-    roformer_root    RVC 目录（含 BS-Roformer 权重与 runtime）
+    ffmpeg          音频解码
 """
 
 from __future__ import annotations
@@ -29,7 +29,6 @@ BUNDLE_LAYOUT = {
     "ffmpeg": ("ffmpeg", "bin", "ffmpeg.exe"),
 }
 
-
 def _first(paths: list[Path]) -> Path | None:
     for item in paths:
         try:
@@ -38,11 +37,6 @@ def _first(paths: list[Path]) -> Path | None:
         except OSError:
             continue
     return None
-
-
-def bundled(name: str) -> Path | None:
-    return _first([BUNDLED / name])
-
 
 def resolve_vad(configured: str = "") -> Path | None:
     return _first(
@@ -55,103 +49,6 @@ def resolve_vad(configured: str = "") -> Path | None:
             Path(r"H:\models\silero_vad.onnx"),
         ]
     )
-
-
-def resolve_yamnet(configured: str = "") -> Path | None:
-    return _first(
-        [
-            Path(configured).expanduser() if configured else None,
-            PACKED / "yamnet" / "yamnet.onnx",
-        ]
-    )
-
-
-def resolve_yamnet_classes(configured: str = "") -> Path | None:
-    return _first(
-        [
-            Path(configured).expanduser() if configured else None,
-            BUNDLED / "yamnet_class_map.csv",
-            PACKED / "yamnet" / "yamnet_class_map.csv",
-        ]
-    )
-
-
-def resolve_uvr(configured: str = "") -> Path | None:
-    return _first(
-        [
-            Path(configured).expanduser() if configured else None,
-            PACKED / "uvr" / "UVR-MDX-NET-Voc_FT.onnx",
-        ]
-    )
-
-
-def _sensevoice_ok(folder: Path) -> bool:
-    return (folder / "model.int8.onnx").is_file() and (folder / "tokens.txt").is_file()
-
-
-def normalize_sensevoice_dir(configured: str) -> Path | None:
-    """把用户填的路径规整成真正的模型目录。
-
-    支持三种填法：
-      1) 文件夹（含 model.int8.onnx + tokens.txt）       → 直接用
-      2) 文件夹（解压后外面还包了一层）                   → 往下找一层
-      3) 直接选了 model.int8.onnx 文件                    → 取所在文件夹
-    """
-    raw = (configured or "").strip().strip('"').strip("'")
-    if not raw:
-        return None
-    path = Path(raw).expanduser()
-    if path.is_file():
-        path = path.parent
-    if not path.is_dir():
-        return None
-    if _sensevoice_ok(path):
-        return path
-    # 常见：解压后多一层同名目录
-    try:
-        for child in sorted(path.iterdir()):
-            if child.is_dir() and _sensevoice_ok(child):
-                return child
-    except OSError:
-        return None
-    return None
-
-
-def sensevoice_missing(path: Path | None) -> list[str]:
-    """返回还缺哪些文件，给用户看。"""
-    if path is None:
-        return ["model.int8.onnx", "tokens.txt"]
-    missing: list[str] = []
-    if not (path / "model.int8.onnx").is_file():
-        missing.append("model.int8.onnx")
-    if not (path / "tokens.txt").is_file():
-        missing.append("tokens.txt")
-    return missing
-
-
-def resolve_sensevoice_dir(configured: str = "") -> Path | None:
-    normalized = normalize_sensevoice_dir(configured)
-    if normalized is not None:
-        return normalized
-    candidates: list[Path] = []
-    if configured and configured.strip():
-        candidates.append(Path(configured).expanduser())
-    env = os.getenv("ASTRBOT_SENSEVOICE_DIR", "").strip()
-    if env:
-        candidates.append(Path(env).expanduser())
-    candidates += [
-        PACKED / "sensevoice",
-        Path(r"H:\sensevoice"),
-        Path(r"H:\Deepseek-Harness\Workspace\asr\models\sensevoice"),
-    ]
-    for item in candidates:
-        try:
-            if (item / "model.int8.onnx").is_file():
-                return item
-        except OSError:
-            continue
-    return None
-
 
 def resolve_bundle(configured_root: str = "") -> dict:
     """按模型包目录推导所有外部模型路径。

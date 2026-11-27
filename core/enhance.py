@@ -2,7 +2,7 @@
 
 默认不处理（none）。只有判型命中才动手：
     vad 无人声          → skip（不送 ASR）
-    音乐主导 + 有人声    → separate（UVR / BS-Roformer）
+    音乐主导 + 有人声    → separate（UVR）
     """
 
 from __future__ import annotations

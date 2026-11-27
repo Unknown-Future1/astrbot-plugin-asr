@@ -12,7 +12,6 @@ from pathlib import Path
 
 from .audio import ensure_ffmpeg, load_wav, prepare_audio
 from .enhance import Enhancer
-from .events import SoundEvents
 from .sensevoice import SenseVoice
 from .separate import Separator
 from .vad import Vad
@@ -56,7 +55,7 @@ class Pipeline:
             vad_model=vad_model,
             yamnet_model=yamnet_model,
             yamnet_classes=yamnet_classes,
-                num_threads=num_threads,
+            num_threads=num_threads,
             enable_separate=enable_separate,
             enable_yamnet=enable_yamnet,
         )
@@ -99,6 +98,17 @@ class Pipeline:
         if prepared["wav"] is not None and self.sensevoice and self.sensevoice.available():
             proc_samples, proc_sr = load_wav(prepared["wav"])
             speech = self.sensevoice.transcribe(proc_samples, proc_sr)
+
+        # 分离后如果反而没识别出文字，退回原始音频再试一次
+        if (
+            not (speech.get("text") or "").strip()
+            and prepared.get("method") in ("uvr",)
+            and prepared.get("wav") != wav_path
+        ):
+            fallback = self.sensevoice.transcribe(samples, sr)
+            if (fallback.get("text") or "").strip():
+                speech = fallback
+                prepared = dict(prepared, method="none", fallback="empty_after_separation")
 
         # 低质量抢救：识别不可信、又有明显音乐时，分离后再试一次
         music_ratio = float((profile.get("music") or 0.0))

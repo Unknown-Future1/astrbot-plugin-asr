@@ -50,7 +50,7 @@ QQ 语音 → 插件 → 文字（含笑声/掌声等标注） → 大模型 →
 
 2. **模型组件包** 让DSH或豆包等大模型代劳。下载并解压到任意目录（如`H:\ASR_Enhance_Scripts`中）
 
-   ![image-20261127182311161](C:\Users\Unknown_Future\AppData\Roaming\Typora\typora-user-images\image-20261127182311161.png)
+   ![快速上手](https://gcore.jsdelivr.net/gh/Unknown-Future1/ASR_Enhance_Scripts@b6ba205c16bb578b58ca875ea5833928a5d60d8e/images/quickstart.png)
 
    - 仓库：<https://github.com/Unknown-Future1/ASR_Enhance_Scripts>
 

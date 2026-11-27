@@ -1,0 +1,97 @@
+{
+  "enable_sensevoice": {
+    "type": "bool",
+    "description": "启用 SenseVoice 识别",
+    "hint": "关闭后无法给后台大模型输入语音文字",
+    "default": true
+  },
+  "model_root": {
+    "type": "string",
+    "description": "本地模型包目录",
+    "hint": "你下载的模型包所在的文件夹路径，插件会自己找包内所需组件。(例如 H:\\ASR_Enhance_Scripts)",
+    "default": "H:\\ASR_Enhance_Scripts"
+  },
+  "enable_vad": {
+    "type": "bool",
+    "description": "启用 VAD 人声检测",
+    "hint": "用于判断人声占比，防止纯音乐被误识别为文字；还有判断背景音乐与人声占比",
+    "default": true
+  },
+  "enable_separate": {
+    "type": "bool",
+    "description": "启用音乐主导时的人声分离",
+    "hint": "用于改善有 bgm 时语音转文字的质量",
+    "default": true
+  },
+  "enable_yamnet": {
+    "type": "bool",
+    "description": "启用声音事件判断",
+    "hint": "用于判断语音中出现的部分声音，如笑声，掌声等事件",
+    "default": true
+  },
+  "reply_with_audio": {
+    "type": "bool",
+    "description": "回复附带声音信息",
+    "hint": "在文字后加一行（音乐占比 / 人声占比 / 音效）",
+    "default": true
+  },
+  "with_emotion": {
+    "type": "bool",
+    "description": "转写文本带情绪前缀",
+    "hint": "给后台模型的文本前加「（开心）」这类情绪前缀；默认开启，想要纯文字就关掉",
+    "default": true
+  },
+  "max_seconds": {
+    "type": "int",
+    "description": "单条语音最长处理秒数，QQ语音最长 3 分钟 180s 即可",
+    "default": 180
+  },
+  "quality_threshold": {
+    "type": "float",
+    "description": "方言/失真判定阈值",
+    "hint": "0~1，转写可信度低于此值就返回下面的提示。越低越宽松，默认 0.5",
+    "default": 0.5
+  },
+  "separate_max_seconds": {
+    "type": "int",
+    "description": "自动分离音频人声的最大音频时长（秒）",
+    "hint": "0 = 不限制（推荐）；QQ 语音最长 3 分钟，可以损失部分时间换质量，混合音频需要分离人声后提取才可用",
+    "default": 0
+  },
+  "annotate_events": {
+    "type": "bool",
+    "description": "在转写文本里标注声音事件",
+    "hint": "开启后会在对应句子后插入事件标记：确定的写「（笑声 5.2s）」，低置信度的写「（疑似掌声 5.0s）」",
+    "default": true
+  },
+  "num_threads": {
+    "type": "int",
+    "description": "推理线程数",
+    "hint": "0 = 自动（按 CPU 核心数取 2~6）；大于 0 则固定。",
+    "default": 0
+  },
+  "dialect_reply": {
+    "type": "string",
+    "description": "识别可信度低时返回给模型的内容",
+    "hint": "经过分离抢救后仍不可信时使用；这段文字会作为语音转写结果进入对话",
+    "default": "[这段语音没听清（可能是方言、口音，或背景音太重），可以卖萌表示没听懂]"
+  },
+  "silent_reply": {
+    "type": "string",
+    "description": "没人声时返回给模型的内容",
+    "hint": "纯音乐或静音时识别不到文字，则会用这句话告知给后台大模型",
+    "default": "[这段语音里没有人声]"
+  },
+  "trigger_mode": {
+    "type": "string",
+    "description": "触发方式",
+    "hint": "always=所有语音；at=@机器人才处理；reply=只处理引用的语音",
+    "default": "always"
+  },
+  "mode": {
+    "type": "string",
+    "description": "运行模式",
+    "hint": "provider=把转写主动喂给后台大模型，使其理解语音内容（推荐）；chat=插件直接把文字发到群里",
+    "default": "provider"
+  }
+}

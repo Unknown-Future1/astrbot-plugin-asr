@@ -1,0 +1,33 @@
+# ============================================================================
+# Sensevoice ASR语音转写增强 — 依赖与外部组件说明
+# ============================================================================
+#
+# 【Python 依赖】以下库由本文件声明，随插件安装
+#   onnxruntime  YAMNet 声音事件 + UVR 人声分离推理
+#   numpy        音频数组运算
+#   librosa      重采样
+#   sherpa-onnx  SenseVoice / VAD / UVR 推理框架
+#
+# 【外部组件包】（必须，不随插件分发）
+#   仓库：https://github.com/Unknown-Future1/ASR_Enhance_Scripts
+#   下载：Releases → ASR_Enhance_Scripts.zip（约 246 MB，解压后约 369 MB）
+#
+#   包内包含：
+#     sensevoice/    SenseVoice-Small 识别模型（model.int8.onnx + tokens.txt，228 MB）
+#     yamnet/        YAMNet 声音事件模型（yamnet.onnx + 类别表，15.4 MB）
+#     uvr/           UVR-MDX 人声分离模型（UVR-MDX-NET-Voc_FT.onnx，63.7 MB）
+#     ffmpeg.exe     音频解码（61.5 MB，任意格式转 16k 单声道 wav）
+#
+#   使用方式：解压到任意目录，在插件设置「本地模型包目录」填该路径
+#   插件会自动在目录内查找各组件，无需改 Python 环境变量
+#
+# 【随包小模型】（随插件分发，无需下载）
+#     models/silero_vad.onnx        VAD 人声检测（0.6 MB）
+#     models/yamnet_class_map.csv   YAMNet 类别表（10 KB）
+#
+# ============================================================================
+
+onnxruntime>=1.16
+numpy>=1.26
+librosa>=0.10
+sherpa-onnx>=1.10

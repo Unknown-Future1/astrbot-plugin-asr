@@ -1,0 +1,6 @@
+name: astrbot_plugin_sensevoice_asr_enhance
+display_name: Sensevoice ASR语音转写增强
+desc: 把 QQ 语音转成文字：VAD 人声检测 + 音乐分离 + 声音事件（带时间戳）+ SenseVoice 识别，支持情绪标注，零 API Key、零联网。纯 CPU ，无需 torch。
+version: "0.2.0"
+author: 未知の未来
+repo: https://github.com/Unknown-Future1/astrbot_plugin_sensevoice_asr_enhance

@@ -12,7 +12,7 @@ from pathlib import Path
 
 from astrbot.api import logger
 from astrbot.api.event import AstrMessageEvent, filter
-from astrbot.api.message_components import Record, Reply
+from astrbot.api.message_components import Plain, Record, Reply
 from astrbot.api.star import Context, Star, register
 
 from .core import paths, provider  # noqa: F401  （注册 STT provider）
@@ -143,7 +143,9 @@ class AsrEnhancePlugin(Star):
         # provider 模式：交给 AstrBot 的 STT 流程，插件不再自己发言
         if str(self.config.get("mode", "provider")) != "chat":
             return
-        record = self._pick_record(event)
+        record, _quoted = await self._quoted_record_async(event)
+        if record is None:
+            record = self._own_record(event)
         if record is None:
             return
         if not self._should_handle(event):
@@ -216,9 +218,16 @@ class AsrEnhancePlugin(Star):
     @filter.command("asr_enhance_check")
     async def cmd_check(self, event: AstrMessageEvent):
         """引用一条语音，查看判型与识别结果。"""
-        record = self._pick_record(event)
+        record, quoted_text = await self._quoted_record_async(event)
         if record is None:
-            await self._send(event, "请引用一条语音再发 /asr_enhance_check")
+            if quoted_text:
+                await self._send(
+                    event,
+                    f"引用语音的转写：{quoted_text}\n"
+                    "（原始音频已被 AstrBot 预处理器替换，无法再取判型详情）",
+                )
+            else:
+                await self._send(event, "请引用一条语音再发 /asr_enhance_check")
             return
         try:
             path = Path(await record.convert_to_file_path())
@@ -237,6 +246,64 @@ class AsrEnhancePlugin(Star):
         return True
 
     @staticmethod
+    async def _fetch_record(event: AstrMessageEvent, reply_id):
+        """用 get_msg 重新拉取被引用消息里的原始语音（预处理器会把它替换成文字）。"""
+        bot = getattr(event, "bot", None)
+        if bot is None or not hasattr(bot, "call_action"):
+            return None
+        params = {"message_id": int(reply_id)}
+        self_id = getattr(event, "self_id", None)
+        if self_id:
+            params["self_id"] = self_id
+        try:
+            data = await bot.call_action("get_msg", **params)
+        except Exception:  # noqa: BLE001
+            return None
+        for seg in (data or {}).get("message") or []:
+            if seg.get("type") != "record":
+                continue
+            raw = seg.get("data") or {}
+            record = Record(
+                file=raw.get("file") or raw.get("url") or "",
+                url=raw.get("url") or "",
+                path=raw.get("path") or "",
+            )
+            return record
+        return None
+
+    @staticmethod
+    def _quoted_text(event: AstrMessageEvent) -> str:
+        """取引用链里预处理器写回的纯文本（如果有）。"""
+        for comp in event.get_messages():
+            if isinstance(comp, Reply):
+                texts = [
+                    sub.text
+                    for sub in (comp.chain or [])
+                    if isinstance(sub, Plain) and getattr(sub, "text", "")
+                ]
+                if texts:
+                    return "".join(texts)
+        return ""
+
+    async def _quoted_record_async(self, event: AstrMessageEvent):
+        """返回 (Record|None, 已转写文本)。优先取原始音频，取不到时退回文字。"""
+        text = self._quoted_text(event)
+        record = self._quoted_record(event)
+        if record is not None:
+            return record, text
+
+        reply_id = None
+        for comp in event.get_messages():
+            if isinstance(comp, Reply):
+                reply_id = getattr(comp, "id", None)
+                break
+        if reply_id is not None:
+            record = await self._fetch_record(event, reply_id)
+            if record is not None:
+                return record, text
+        return None, text
+
+    @staticmethod
     def _quoted_record(event: AstrMessageEvent):
         for comp in event.get_messages():
             if isinstance(comp, Reply) and comp.chain:
@@ -245,14 +312,18 @@ class AsrEnhancePlugin(Star):
                         return sub
         return None
 
-    def _pick_record(self, event: AstrMessageEvent):
-        quoted = self._quoted_record(event)
-        if quoted is not None:
-            return quoted
+    @staticmethod
+    def _own_record(event: AstrMessageEvent):
         for comp in event.get_messages():
             if isinstance(comp, Record) and getattr(comp, "file", None):
                 return comp
         return None
+
+    def _pick_record(self, event: AstrMessageEvent):
+        quoted = self._quoted_record(event)
+        if quoted is not None:
+            return quoted
+        return self._own_record(event)
 
     async def _send(self, event: AstrMessageEvent, text: str) -> None:
         try:

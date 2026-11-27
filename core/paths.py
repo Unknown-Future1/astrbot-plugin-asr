@@ -1,10 +1,7 @@
 """模型路径解析：小模型随包，大模型走配置。
 
-随包（<16MB）：
-    models/silero_vad.onnx       0.6 MB  人声检测
-        models/yamnet_class_map.csv  0.01 MB 类别表
-
-外置（模型包内，缺了就跳过对应能力）：
+外置（全部在模型包内，缺了就跳过对应能力）：
+    vad_model        silero_vad.onnx（0.6 MB，人声检测）
     sensevoice_dir   SenseVoice 模型目录（model.int8.onnx + tokens.txt）
     yamnet_model     YAMNet 15.4 MB（声音事件）
     uvr_model        UVR-MDX 人声分离 63.7 MB
@@ -16,8 +13,6 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-PKG_ROOT = Path(__file__).resolve().parent.parent
-BUNDLED = PKG_ROOT / "models"
 PACKED = Path(r"H:\ASR_Enhance_Scripts")
 LEGACY_PACKED = Path(r"H:\ASR_Enhance_Scrpits")
 
@@ -27,6 +22,7 @@ BUNDLE_LAYOUT = {
     "yamnet_classes": ("yamnet", "yamnet_class_map.csv"),
     "uvr_model": ("uvr", "UVR-MDX-NET-Voc_FT.onnx"),
     "ffmpeg": ("ffmpeg", "bin", "ffmpeg.exe"),
+    "vad_model": ("vad", "silero_vad.onnx"),
 }
 
 def _first(paths: list[Path]) -> Path | None:
@@ -74,7 +70,13 @@ def resolve_bundle(configured_root: str = "") -> dict:
 
     result: dict = {"root": root, "missing": []}
     for key, parts in BUNDLE_LAYOUT.items():
-        if key == "ffmpeg":
+        if key == "vad_model":
+            options = [
+                root / "vad" / "silero_vad.onnx",
+                root / "silero_vad.onnx",
+            ]
+            path = next((x for x in options if x.exists()), options[0])
+        elif key == "ffmpeg":
             # 兼容三种摆放：包根 / ffmpeg\bin / ffmpeg
             options = [
                 root / "ffmpeg.exe",
@@ -89,5 +91,4 @@ def resolve_bundle(configured_root: str = "") -> dict:
             result["missing"].append(str(path))
 
     # 内置小模型（随包）
-    result["vad_model"] = resolve_vad("")
     return result

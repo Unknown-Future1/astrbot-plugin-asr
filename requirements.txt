@@ -13,6 +13,7 @@
 #   下载：Releases → ASR_Enhance_Scripts.zip（约 246 MB，解压后约 369 MB）
 #
 #   包内包含：
+#     vad/           VAD 人声检测（silero_vad.onnx，0.6 MB）
 #     sensevoice/    SenseVoice-Small 识别模型（model.int8.onnx + tokens.txt，228 MB）
 #     yamnet/        YAMNet 声音事件模型（yamnet.onnx + 类别表，15.4 MB）
 #     uvr/           UVR-MDX 人声分离模型（UVR-MDX-NET-Voc_FT.onnx，63.7 MB）
@@ -21,9 +22,9 @@
 #   使用方式：解压到任意目录，在插件设置「本地模型包目录」填该路径
 #   插件会自动在目录内查找各组件，无需改 Python 环境变量
 #
-# 【随包小模型】（随插件分发，无需下载）
-#     models/silero_vad.onnx        VAD 人声检测（0.6 MB）
-#     models/yamnet_class_map.csv   YAMNet 类别表（10 KB）
+# 【小模型也在组件包内】
+#     vad/silero_vad.onnx           VAD 人声检测（0.6 MB）
+#     yamnet/yamnet_class_map.csv   YAMNet 类别表（14 KB）
 #
 # ============================================================================
 

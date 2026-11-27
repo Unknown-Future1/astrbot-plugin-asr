@@ -58,11 +58,12 @@ QQ 语音 → 插件 → 文字（含笑声/掌声等标注） → 大模型 →
 
 ### 模型包结构
 
-> 组件包只从上面这个 Release 下载；插件本体与本仓库都不附带模型。
+> 组件包只从上面这个 Release 下载；插件本体与本仓库都不附带任何模型文件（含 0.6 MB 的 VAD）。
 
 
 ```
 ASR_Enhance_Scripts\
+├─ vad\                 ← VAD 人声检测（silero_vad.onnx，0.6 MB）
 ├─ sensevoice\          ← SenseVoice 模型（model.int8.onnx + tokens.txt，228 MB）
 ├─ yamnet\              ← 声音事件模型（yamnet.onnx + 类别表，15.4 MB）
 ├─ uvr\                 ← 人声分离模型（UVR-MDX-NET-Voc_FT.onnx，63.7 MB）

@@ -4,3 +4,14 @@ desc: 把 QQ 语音转成文字：VAD 人声检测 + 音乐分离 + 声音事件
 version: "0.2.0"
 author: 未知の未来
 repo: https://github.com/Unknown-Future1/astrbot_plugin_sensevoice_asr_enhance
+astrbot_version: ">=4.29.4"
+support_platforms:
+  - aiocqhttp
+social_link: https://github.com/Unknown-Future1
+tags:
+  - 语音
+  - 语音转写
+  - ASR
+  - 本地识别
+  - ONNX
+  - SenseVoice

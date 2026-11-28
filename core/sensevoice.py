@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import re
+import threading
 from pathlib import Path
 
 import numpy as np
@@ -49,6 +50,7 @@ class SenseVoice:
         self.model_dir = Path(model_dir) if model_dir else None
         self.num_threads = num_threads
         self._rec = None
+        self._lock = threading.Lock()
 
     def available(self) -> bool:
         return bool(
@@ -82,10 +84,11 @@ class SenseVoice:
             audio = librosa.resample(audio, orig_sr=sr, target_sr=16000)
             sr = 16000
         rec = self._ensure()
-        stream = rec.create_stream()
-        stream.accept_waveform(16000, audio)
-        rec.decode_stream(stream)
-        result = stream.result
+        with self._lock:
+            stream = rec.create_stream()
+            stream.accept_waveform(16000, audio)
+            rec.decode_stream(stream)
+            result = stream.result
 
         text = SPECIAL.sub("", getattr(result, "text", "") or "").strip()
         if not VALID.search(text):

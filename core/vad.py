@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import threading
 from pathlib import Path
 
 import numpy as np
@@ -13,12 +14,15 @@ class Vad:
         self.threshold = threshold
         self._detector = None
         self._buffer_seconds = 60.0
+        self._capacity = 0.0
+        self._lock = threading.Lock()
 
     def available(self) -> bool:
         return bool(self.model and self.model.is_file())
 
     def _ensure(self):
-        if self._detector is not None:
+        need = max(60.0, self._buffer_seconds + 5)
+        if self._detector is not None and need <= self._capacity:
             return self._detector
         import sherpa_onnx
 
@@ -29,10 +33,10 @@ class Vad:
         cfg.silero_vad.min_speech_duration = 0.2
         cfg.sample_rate = 16000
         cfg.num_threads = 1
-        # 按音频长度分配，避免 60 秒以上出现 circular buffer 溢出告警
-        capacity = max(60, int(self._buffer_seconds) + 5)
+        # 按历史最长音频分配，只增不减；复用同一个检测器
+        self._capacity = max(self._capacity, need)
         self._detector = sherpa_onnx.VoiceActivityDetector(
-            cfg, buffer_size_in_seconds=capacity
+            cfg, buffer_size_in_seconds=int(self._capacity)
         )
         return self._detector
 
@@ -45,9 +49,13 @@ class Vad:
         audio = np.asarray(samples, dtype=np.float32)
         if sr != 16000:
             audio = librosa.resample(audio, orig_sr=sr, target_sr=16000)
+        with self._lock:
+            return self._segments_locked(audio)
+
+    def _segments_locked(self, audio: np.ndarray) -> list[dict]:
         self._buffer_seconds = len(audio) / 16000
-        self._detector = None   # 按当前长度重建
         vad = self._ensure()
+        vad.reset()   # 复用前清空上一次的状态
         out: list[dict] = []
         step = 8000
         for i in range(0, audio.size, step):

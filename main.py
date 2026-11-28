@@ -15,7 +15,7 @@ from astrbot.api.event import AstrMessageEvent, filter
 from astrbot.api.message_components import Plain, Record, Reply
 from astrbot.api.star import Context, Star, register
 
-from .core import paths, provider  # noqa: F401  （注册 STT provider）
+from .core import executor, paths, provider  # noqa: F401  （注册 STT provider）
 from .core.audio import find_ffmpeg
 from .core.pipeline import Pipeline
 
@@ -164,7 +164,7 @@ class AsrEnhancePlugin(Star):
         work.mkdir(parents=True, exist_ok=True)
         started = time.time()
         try:
-            result = self.pipeline.run(path, work)
+            result = await executor.run_blocking(self.pipeline.run, path, work)
         except Exception as exc:  # noqa: BLE001
             logger.error(f"[ASR+] 处理失败: {exc}", exc_info=True)
             await self._send(event, f"语音处理失败：{str(exc)[:100]}")

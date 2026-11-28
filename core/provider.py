@@ -10,7 +10,8 @@ provider_cls_map 里就有这个类型；插件 __init__ 里会确保 cmd_config
 
 from __future__ import annotations
 
-import asyncio
+import time
+import uuid
 from pathlib import Path
 
 from astrbot.api import logger
@@ -18,7 +19,7 @@ from astrbot.core.provider.entities import ProviderType
 from astrbot.core.provider.provider import STTProvider
 from astrbot.core.provider.register import register_provider_adapter
 
-from . import paths
+from . import executor, paths
 from .pipeline import Pipeline
 
 PROVIDER_TYPE = "asr_enhance_stt"
@@ -97,12 +98,31 @@ class ProviderAsrEnhance(STTProvider):
         )
         return self._pipeline
 
-    async def initialize(self) -> None:
-        loop = asyncio.get_running_loop()
+    @staticmethod
+    def _cleanup_old_dirs(days: int = 3) -> None:
+        root = Path("data") / "plugin_data" / "astrbot_plugin_sensevoice_asr_enhance"
+        cutoff = time.time() - days * 86400
         try:
-            pipeline = await loop.run_in_executor(None, self._ensure_pipeline)
+            for folder in (root / "stt", root / "quote", root / "work"):
+                if not folder.is_dir():
+                    continue
+                for child in folder.iterdir():
+                    try:
+                        if child.is_dir() and child.stat().st_mtime < cutoff:
+                            import shutil
+
+                            shutil.rmtree(child, ignore_errors=True)
+                    except OSError:
+                        continue
+        except OSError:
+            pass
+
+    async def initialize(self) -> None:
+        try:
+            self._cleanup_old_dirs()
+            pipeline = await executor.run_blocking(self._ensure_pipeline)
             if pipeline.sensevoice and pipeline.sensevoice.available():
-                await loop.run_in_executor(None, pipeline.sensevoice._ensure)
+                await executor.run_blocking(pipeline.sensevoice._ensure)
                 logger.info(
                     "[ASR+] STT provider 就绪 | SenseVoice=%s | 分离=%s | YAMNet=%s | ffmpeg=%s",
                     pipeline.sensevoice.model_dir,
@@ -117,14 +137,14 @@ class ProviderAsrEnhance(STTProvider):
 
     # ---------------- 识别 ----------------
     async def get_text(self, audio_url: str) -> str:
-        loop = asyncio.get_running_loop()
         try:
             path = await self._resolve_path(audio_url)
-            work = Path("data") / "plugin_data" / "astrbot_plugin_sensevoice_asr_enhance" / "stt" / str(
-                abs(hash(str(audio_url))) % 10_000_000
+            work = (
+                Path("data") / "plugin_data" / "astrbot_plugin_sensevoice_asr_enhance"
+                / "stt" / f"{abs(hash(str(audio_url))) % 10_000_000}_{uuid.uuid4().hex[:8]}"
             )
-            pipeline = await loop.run_in_executor(None, self._ensure_pipeline)
-            result = await loop.run_in_executor(None, pipeline.run, path, work)
+            pipeline = await executor.run_blocking(self._ensure_pipeline)
+            result = await executor.run_blocking(pipeline.run, path, work)
         except Exception as exc:  # noqa: BLE001
             logger.error(f"[ASR+] 转写失败: {exc}")
             return ""

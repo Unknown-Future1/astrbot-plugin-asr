@@ -93,5 +93,17 @@
     "description": "运行模式",
     "hint": "provider=把转写主动喂给后台大模型，使其理解语音内容（推荐）；chat=插件直接把文字发到群里",
     "default": "provider"
+  },
+  "voice_prefix": {
+    "type": "string",
+    "description": "转写文本前的语音标记",
+    "hint": "支持占位符 {seconds}（时长）；留空 = 不加。例如「（语音 {seconds}s）」→（语音 7.2s）",
+    "default": "（语音 {seconds}s）"
+  },
+  "voice_fingerprint": {
+    "type": "bool",
+    "description": "在标记与日志里加入音频指纹",
+    "hint": "开启后变成「（语音 7.2s #a1b2c3）」，日志也会带 #a1b2c3，便于排查；指纹只标识音频内容，不对应消息 ID",
+    "default": false
   }
 }

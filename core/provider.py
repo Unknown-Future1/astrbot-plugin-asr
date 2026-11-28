@@ -40,6 +40,8 @@ TEMPLATE = {
     "quality_threshold": 0.5,
     "annotate_events": True,
     "silent_reply": "[这段语音里没有人声]",
+    "voice_prefix": "（语音 {seconds}s）",
+    "voice_fingerprint": False,
     "separate_max_seconds": 0,
     "dialect_reply": "[这段语音没听清（可能是方言、口音，或背景音太重），可以卖萌表示没听懂]",
 }
@@ -62,6 +64,8 @@ class ProviderAsrEnhance(STTProvider):
         self.quality_threshold = float(cfg.get("quality_threshold", 0.5) if cfg.get("quality_threshold") is not None else 0.5)
         self.annotate_events = bool(cfg.get("annotate_events", True))
         self.silent_reply = str(cfg.get("silent_reply") or "[这段语音里没有人声]")
+        self.voice_prefix = str(cfg.get("voice_prefix") or "")
+        self.voice_fingerprint = bool(cfg.get("voice_fingerprint", False))
         self.separate_max_seconds = float(cfg.get("separate_max_seconds", 0) or 0)
         self.dialect_reply = str(
             cfg.get("dialect_reply")
@@ -169,13 +173,49 @@ class ProviderAsrEnhance(STTProvider):
 
         if self.with_emotion and speech.get("emotion"):
             text = f"（{speech['emotion']}）{text}"
+
+        duration = float((result.get("audio") or {}).get("duration") or 0.0)
+        fingerprint = self._fingerprint(path) if self.voice_fingerprint else "-"
+        text = self._decorate(text, duration, fingerprint)
         logger.info(
-            "[ASR+] %.1fs → %s（%s）",
-            (result.get("audio") or {}).get("duration") or 0,
-            text[:50],
+            "[ASR+] %.1fs%s → %s（%s）",
+            duration,
+            f" #{fingerprint}" if self.voice_fingerprint else "",
+            text[:60],
             (result.get("decision") or {}).get("path"),
         )
         return text
+
+    @staticmethod
+    def _fingerprint(path) -> str:
+        """音频内容指纹（md5 前 6 位），只用于日志/标注，不对应消息 ID。"""
+        try:
+            import hashlib
+
+            digest = hashlib.md5()
+            with open(path, "rb") as fh:
+                for chunk in iter(lambda: fh.read(65536), b""):
+                    digest.update(chunk)
+            return digest.hexdigest()[:6]
+        except Exception:  # noqa: BLE001
+            return "-"
+
+    def _decorate(self, text: str, duration: float, fingerprint: str) -> str:
+        """按配置给文本加「（语音 Xs #指纹）」前缀。"""
+        if not self.voice_prefix:
+            return text
+        prefix = self.voice_prefix.replace("{seconds}", f"{duration:.1f}")
+        if "{fingerprint}" in prefix:
+            prefix = prefix.replace("{fingerprint}", fingerprint if self.voice_fingerprint else "")
+        elif self.voice_fingerprint:
+            # 模板里没写占位符时，自动插到最后一个右括号前
+            cut = max(prefix.rfind("）"), prefix.rfind(")"))
+            prefix = (
+                f"{prefix[:cut]} #{fingerprint}{prefix[cut:]}"
+                if cut != -1
+                else f"{prefix} #{fingerprint}"
+            )
+        return f"{prefix}{text}"
 
     def _annotate(self, result: dict, text: str) -> str:
         """把笑声/掌声/咳嗽等社交事件按时间插到句子后面。

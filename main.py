@@ -35,6 +35,8 @@ DEFAULTS = {
     "quality_threshold": 0.5,
     "annotate_events": True,
     "silent_reply": "[这段语音里没有人声]",
+    "voice_prefix": "（语音 {seconds}s）",
+    "voice_fingerprint": False,
     "separate_max_seconds": 0,
     "dialect_reply": "[这段语音没听清（可能是方言、口音，或背景音太重），可以卖萌表示没听懂]",
 }
